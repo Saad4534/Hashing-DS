@@ -1,0 +1,314 @@
+#include<iostream>
+#include<string.h>
+#include<stdlib.h>
+
+using namespace std;
+
+const int hashtable = 11;
+
+char disk[64];
+
+struct Hashing{ 
+
+    string file_name;
+    int start;
+	int end; 
+    int blocks; 
+    Hashing *next;
+    Hashing *prev;
+}; 
+
+Hashing *table[hashtable];
+
+int Hashvalue(int ascii)
+{
+	return ascii%hashtable;
+}
+
+int Conversion(string name)
+{
+	int ascii = 0;
+	for(int i=0;i<name.length();i++)
+    {
+        ascii = name[i]+ascii;
+    }
+    return ascii = Hashvalue(ascii);
+    
+}
+
+bool Search(int index,string name)
+{
+	Hashing *temp;
+	temp = table[index];
+	for(;temp!=NULL;temp = temp->next)
+	{
+		if(temp->file_name == name)
+		{
+			return true;
+		}
+		else if(temp->next == NULL)
+		{
+			if(temp->file_name!=name)
+			{
+				return false;
+			}
+		}
+	}
+	
+}
+
+void insert(int index,int size,string name)
+{
+	Hashing *ptr = new Hashing;
+	Hashing *temp;
+	ptr->file_name = name;
+	ptr->blocks = size;
+	ptr->next = NULL;
+	if(table[index]==NULL)
+	{
+		table[index]=ptr;
+	}
+	else
+	{
+		temp = table[index];
+		for(;temp!=NULL;temp = temp->next)
+		{
+			if(temp->next == NULL)
+			{
+				temp->next = ptr;
+				break;
+			}
+		}
+	}
+	int counter = 0;
+	for(int i=0;i<64;i++)
+	{
+		if(disk[i] == 'O')
+		{
+			counter++;
+		}
+	}
+	ptr->start =  counter;
+	ptr->end = counter+size;
+	for(int i=ptr->start;i<ptr->end;i++)
+	{
+		disk[i] = 'O';
+	}
+	
+}
+
+void Deleting(Hashing *temp)
+{
+	for(int i=temp->start;i<temp->end;i++)
+	{
+		disk[i] = 'E';
+	}
+}
+
+
+void Remove(int index,string name)
+{
+	Hashing *temp = table[index];
+	Hashing *temp1 = new Hashing;
+	temp->prev=temp1;
+	temp1->next=temp;
+	temp1->prev = NULL;
+	for(;temp!=NULL;temp = temp->next)
+	{
+		if(temp->file_name == name)
+		{
+			Deleting(temp);
+			if(temp == table[index])
+			{
+				table[index]=temp->next;
+			}
+			else if(temp != table[index])
+			{
+				temp1->next=temp->next;
+			}
+		}
+		
+		temp1 = temp1->next;
+	}
+}
+
+
+void Searching(int index,string name)
+{
+	Hashing *temp;
+	temp = table[index];
+	for(;temp!=NULL;temp = temp->next)
+	{
+		if(temp->file_name == name)
+		{
+			cout<<"Search Results"<<endl;
+			cout<<"Index: "<<index<<" |-> "<<temp->file_name<<endl;
+			cout<<"Number of Bytes occupied: "<<temp->blocks<<endl;
+			cout<<"Bytes: "<<temp->start<<" - "<<temp->end<<endl;
+		}
+	}
+}
+
+void Display()
+{
+	Hashing *temp;
+	for(int i=0;i<=10;i++)
+	{
+		temp=table[i];
+		cout<<" "<<i<<" |->";
+		if(temp!=NULL)
+		{
+			while(temp!=NULL)
+			{
+			    if(temp!=NULL)
+		    	{
+		        	cout<<" "<<temp->file_name<<" |->";
+	    		}
+	    		temp=temp->next;
+			}
+			cout<<" | NUll";
+		}
+		else
+		{
+			cout<<" | NULL";
+		}
+		cout<<endl;
+		cout<<"---------------------------"<<endl;
+	}
+}
+
+
+int main()
+{
+	Hashing *hashing;
+	
+	for(int i=0;i<64;i++)
+    {  
+      	disk[i] = 'E';
+    }
+	
+	int choice = -1;
+	string name;
+	
+	while(choice!=0)
+	{
+		system("cls");
+		cout<<"Enter choice"<<endl;
+		cout<<"1. Add Data\n2. Remove Data\n3. Search Data\n4. Display All\n5. Display Memory\n\nPress 0 to EXIT"<<endl;
+		cin>>choice;
+		switch(choice)
+		{
+			case 1:
+				{
+					system("cls");
+					cout<<"Enter name of the file e.g.(example.txt) "<<endl;
+					cin.ignore();
+					getline(cin,name);
+					int index = Conversion(name);
+					if(Search(index,name) == true)
+					{
+						cout<<"File with name "<<name<<" alreay exists"<<endl;
+						system("pause");
+					}
+					else
+					{
+						cout<<"Enter the number of bytes you want to be allocated for this file"<<endl;
+						int size;
+					    cin>>size;
+					    int counter = 0;
+					    for(int i=0;i<64;i++)
+					    {
+					    	if(disk[i] == 'E')
+					    	{
+					    		counter++;
+							}
+						}
+						if(counter < size)
+						{
+							cout<<"Sorry !!!\nNot Enough Space"<<endl;
+						}
+						else if(counter > size)
+						{
+							insert(index,size,name);
+							cout<<"Your Data has been successfully saved"<<endl;
+						}
+						system("pause");	
+					}
+					break;
+				}
+			case 2:
+				{
+					system("cls");
+					string name;
+					cout<<"Enter name of the file e.g.(example.txt) "<<endl;
+					cin.ignore();
+					getline(cin,name);
+					int index = Conversion(name);
+					if(Search(index,name) == true)
+					{
+						char x;
+						cout<<"Are you sure you want to delete this file with name '"<<name<<"'\nPress Y for YES, N for NO"<<endl;
+						cin>>x;
+						if(x=='y' || x=='Y')
+						{
+							Remove(index,name);
+							cout<<"Your data has been successfully removed"<<endl;
+						}
+						else
+						{
+							cout<<"We care about your opinion\nThanks...."<<endl;
+						}
+					}
+					else
+					{
+						cout<<"File with name "<<name<<" does not exists"<<endl;
+					}
+					system("pause");
+					break;
+				}
+			case 3:
+				{
+					system("cls");
+					string name;
+					cout<<"Enter name of the file e.g.(example.txt) "<<endl;
+					cin.ignore();
+					getline(cin,name);
+					int index = Conversion(name);
+					if(Search(index,name) == true)
+					{
+						Searching(index,name);
+					}
+					else
+					{
+						cout<<"File with name "<<name<<" does not exists"<<endl;
+					}
+					system("pause");
+					break;
+				}
+			case 4:
+				{
+					system("cls");
+					Display();
+					system("pause");
+					break;
+				}	
+			case 5:
+				{
+					system("cls");
+					for(int i=0;i<64;i++)
+					{
+						cout<<i+1<<": "<<disk[i]<<"\t\t\t";
+					}
+					cout<<endl;
+					system("pause");
+				}
+			default:
+				{
+					cout<<"Enter Choice Again"<<endl;
+					system("pause");
+				}		
+		}
+	}
+	
+	
+}
